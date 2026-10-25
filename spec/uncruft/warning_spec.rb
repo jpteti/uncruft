@@ -16,6 +16,14 @@ describe Uncruft::Warning do
     Warning.warn('oh no, you should worry')
   end
 
+  it "doesn't raise on generic warnings that aren't strings" do
+    expect(Uncruft.deprecator).not_to receive(:warn)
+    expect { warn(['oh no, you should worry']) }.to output("oh no, you should worry\n").to_stderr
+    expect { warn(42) }.to output("42\n").to_stderr
+    expect { warn(StandardError.new('oh no')) }.to output("oh no\n").to_stderr
+    expect { Kernel.warn(['oh no, you should worry']) }.to output("oh no, you should worry\n").to_stderr
+  end
+
   it "accepts kwargs from Kernel.warn" do # rubocop:disable RSpec/NoExpectationExample
     warn(uplevel: 1)
     warn('oh no, you should worry', uplevel: 1)
@@ -32,6 +40,13 @@ describe Uncruft::Warning do
       expect(warn('oh no, this is DePrEcAtEd, so you should worry')).to eq 'banana'
       expect(Kernel.warn('oh no, this is DePrEcAtEd, so you should worry')).to eq 'banana'
       expect(Warning.warn('oh no, this is DePrEcAtEd, so you should worry')).to eq 'banana'
+    end
+
+    it 'treats an array-wrapped warning as a deprecation warning' do
+      expect(Uncruft.deprecator).to receive(:warn).with('[dEpReCaTiOn] oh no, you should worry')
+        .and_return('banana').twice
+      expect(warn(['[dEpReCaTiOn] oh no, you should worry'])).to eq 'banana'
+      expect(Kernel.warn(['[dEpReCaTiOn] oh no, you should worry'])).to eq 'banana'
     end
 
     context 'and when warning includes caller info' do

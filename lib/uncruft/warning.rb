@@ -22,9 +22,9 @@ module Uncruft
     end
 
     def warn(*args, **kwargs)
-      str = args[0]
+      str = args.flatten.first
 
-      if str =~ DEPRECATION_PATTERN # rubocop:disable Performance/RegexpMatch
+      if str.is_a?(String) && str =~ DEPRECATION_PATTERN
         cloc = find_caller_location(caller_locations(1..5))
         message = strip_caller_info(str, cloc).strip
         Uncruft.deprecator.warn(message)
